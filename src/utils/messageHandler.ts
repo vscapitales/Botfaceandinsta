@@ -6,7 +6,7 @@ config(); // Configure dotenv
 import { callSendAPI } from '../utils/callSendAPI';
 import { obtenerRespuestaChatGPTFlow, manejarConsultaChatGPT } from '../flows/noclientes';
 import { keywords } from '../config/keywords';
-import { getSession, createSession } from '../config/sessionManager';
+import { getSession } from '../config/sessionManager';
 
 export async function handleIncomingMessage(
   senderId: string,

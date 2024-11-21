@@ -1,12 +1,26 @@
 //index.ts
 
+
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import { config } from './config/dotenvConfig'; // Asegúrate de que la ruta sea correcta
 import { handleIncomingMessage } from './utils/messageHandler';
 import { initializeBot } from './bot';
 
+
+dotenv.config();
+
 const app = express();
-app.use(express.json()); // Usar el middleware integrado de Express
+app.use(express.json());
+
+const apiKey = process.env.OPENAI_API_KEY;
+if (!apiKey) {
+  process.exit(1);
+}
+const openai = new OpenAI({ apiKey });
+
+
 
 // Ruta principal para la página de presentación
 app.get('/', (req: Request, res: Response) => {
@@ -54,6 +68,28 @@ app.get('/', (req: Request, res: Response) => {
 
   `);
 });
+
+app.post('/test-openai', async (req, res) => {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'Eres un asistente de prueba.',
+        },
+        { role: 'user', content: 'Hola, ¿cómo estás?' },
+      ],
+      max_tokens: 50,
+      temperature: 0.7,
+    });
+
+    res.json({ response: completion.choices[0]?.message?.content });
+  } catch (error: any) {
+        res.status(500).json({ error: 'Error al conectar con OpenAI.' });
+  }
+});
+
 
 // Función principal para inicializar el bot y manejar errores
 (async () => {
