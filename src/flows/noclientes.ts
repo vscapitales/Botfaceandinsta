@@ -132,7 +132,7 @@ export const manejarConsultaChatGPT = async (
     'No puedes decir que ofrecemos servicios financieros. Tu objetivo es ayudar a los usuarios a entender los servicios de Crediweb, ' +
     'como los requisitos para solicitar un préstamo, tasas de interés, plazos de pago, y cualquier otra consulta relacionada con los productos de Crediweb. ' +
     'Recuerda alentar a las personas a descargar la aplicación desde [https://bit.ly/3aIB8HL]. Usa un lenguaje natural y sencillo ya que nuestro público es gente del común y puedes usar emoticones.' +
-    'El monto máximo del préstamo es $750.000 y el monto minimo es de $150.000 con plazos hasta 90 días. No estamos aun disponibles para Iphone solo para Android. si no estas seguro d ela respuesta puedes invitarlos a la pagina web a obtener mas informacion ' 
+    'El monto máximo del préstamo es $750.000 y el monto minimo es de $150.000 con plazos hasta 90 días. No estamos aun disponibles para Iphone solo para Android. si no estas seguro d ela respuesta puedes invitarlos a la pagina web a obtener mas informacion. Si el usuario requiere soporte humano El numero de servico al cliente es +573046412222 y lo envias como un link de whatsapp.  ' 
         },
         { role: 'user', content: text },
       ],
