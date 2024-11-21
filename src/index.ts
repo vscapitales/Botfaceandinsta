@@ -1,4 +1,4 @@
-//index
+//index.ts
 
 import express, { Request, Response } from 'express';
 import { config } from './config/dotenvConfig'; // Asegúrate de que la ruta sea correcta

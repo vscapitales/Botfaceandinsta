@@ -35,6 +35,9 @@ export async function handleIncomingMessage(
       // Process the message with Wit.ai
       const witResponse = await witClient.message(messageText, {});
 
+      // Log completo de la respuesta de Wit.ai
+      console.log('Respuesta de Wit.ai:', JSON.stringify(witResponse, null, 2));
+
       // Validate the existence of intents before accessing the array
       const intent = witResponse.intents?.[0]?.name || null;
 
