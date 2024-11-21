@@ -5,7 +5,7 @@ import { config } from 'dotenv'; // Import dotenv config
 config(); // Configure dotenv
 
 import { callSendAPI } from '../utils/callSendAPI';
-import { manejarConsultaChatGPT } from '../flows/noclientes';
+import { obtenerRespuestaChatGPTFlow, manejarConsultaChatGPT } from '../flows/noclientes';
 import { keywords } from '../config/keywords';
 
 
@@ -26,20 +26,23 @@ export async function handleIncomingMessage(
       // If the user has an active session, handle the query
       await manejarConsultaChatGPT(senderId, messageText, platform);
     } else {
-      // Procesar la entrada buscando coincidencias en las palabras clave
-      const lowerCaseMessage = messageText.toLowerCase(); // Normaliza el mensaje a minúsculas
+      // Normalize message to lowercase for keyword matching
+      const lowerCaseMessage = messageText.toLowerCase();
       const isGreeting = keywords.greetings.some((keyword) =>
         lowerCaseMessage.includes(keyword)
       );
 
       if (isGreeting) {
-        // Si se detecta un saludo
+        console.log(`Greeting detected for ${senderId}. Sending welcome message.`);
+        // Send the initial greeting
         const response = {
           text: `Bienvenido a CrediWeb para ${platform}! 🌟 Soy tu asistente virtual 🤖.`,
         };
         await callSendAPI(platform, senderId, response);
+
+        // Redirect to obtenerRespuestaChatGPTFlow after greeting
+        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform);
       } else {
-        // Si no se detecta un saludo u otra palabra clave
         console.log('No matching keyword detected in the message.');
         const response = {
           text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?',
