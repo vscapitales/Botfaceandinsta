@@ -1,4 +1,3 @@
-// noclientes.ts
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { callSendAPI } from '../utils/callSendAPI';
@@ -9,26 +8,28 @@ import { faqs } from './faqs';
 dotenv.config();
 
 // Inicializar OpenAI
-
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey });
 
+// Estructura para manejar sesiones de usuarios
+interface UserSession {
+  state: string;
+  timeoutHandle?: NodeJS.Timeout;
+}
 
+const userSessions: { [key: string]: UserSession } = {};
 
 // Función para elegir un mensaje aleatorio
 function getRandomConsultaMessage() {
-    const randomIndex = Math.floor(Math.random() * consultaVariations.length);
-    return consultaVariations[randomIndex];
+  const randomIndex = Math.floor(Math.random() * consultaVariations.length);
+  return consultaVariations[randomIndex];
 }
-
-
 
 // Función para elegir un mensaje aleatorio de interacción previa
 function getRandomFollowUpMessage() {
-    const randomIndex = Math.floor(Math.random() * followUpVariations.length);
-    return followUpVariations[randomIndex];
+  const randomIndex = Math.floor(Math.random() * followUpVariations.length);
+  return followUpVariations[randomIndex];
 }
-
 
 // Función para buscar en las FAQs
 function buscarFAQ(text: string): string | null {
@@ -41,8 +42,12 @@ function buscarFAQ(text: string): string | null {
 }
 
 // Flujo principal
-export const obtenerRespuestaChatGPTFlow = async (senderId: string, text: string) => {
-  console.log(`Iniciando flujo alternativo para ${senderId}...`);
+export const obtenerRespuestaChatGPTFlow = async (
+  senderId: string,
+  text: string,
+  platform: 'messenger' | 'instagram' // Agregar la plataforma
+) => {
+  console.log(`Iniciando flujo alternativo para ${senderId} en ${platform}...`);
 
   // Iniciar una nueva sesión para el usuario
   userSessions[senderId] = { state: 'waiting_for_initial_response' };
@@ -54,28 +59,32 @@ export const obtenerRespuestaChatGPTFlow = async (senderId: string, text: string
     '✨ ¡Te esperamos en CrediWeb!';
 
   const response1 = { text: initialMessage };
-  await callSendAPI(senderId, response1);
+  await callSendAPI(platform, senderId, response1);
 
   // Mensaje aleatorio de consulta
   const randomMessage = getRandomConsultaMessage();
   console.log(`Mensaje aleatorio seleccionado: ${randomMessage}`);
   const response2 = { text: randomMessage };
-  await callSendAPI(senderId, response2);
+  await callSendAPI(platform, senderId, response2);
 
   // Configurar un temporizador para terminar la conversación si el usuario no responde
   userSessions[senderId].timeoutHandle = setTimeout(() => {
-    terminarConversacion(senderId);
+    terminarConversacion(senderId, platform);
   }, 60000); // 60 segundos de espera
 };
 
 // Manejar la consulta después del mensaje aleatorio
-export const manejarConsultaChatGPT = async (senderId: string, text: string) => {
-  console.log(`Procesando consulta para ${senderId}...`);
+export const manejarConsultaChatGPT = async (
+  senderId: string,
+  text: string,
+  platform: 'messenger' | 'instagram' // Agregar la plataforma
+) => {
+  console.log(`Procesando consulta para ${senderId} en ${platform}...`);
 
   // Verificar si el usuario tiene una sesión activa
   if (!userSessions[senderId]) {
     console.log(`No hay sesión activa para ${senderId}. Iniciando nueva sesión.`);
-    await obtenerRespuestaChatGPTFlow(senderId, text);
+    await obtenerRespuestaChatGPTFlow(senderId, text, platform); // Agregar el argumento platform
     return;
   }
 
@@ -93,7 +102,7 @@ export const manejarConsultaChatGPT = async (senderId: string, text: string) => 
   if (faqResponse) {
     console.log('Se encontró una respuesta en las FAQs.');
     const response = { text: faqResponse };
-    await callSendAPI(senderId, response);
+    await callSendAPI(platform, senderId, response);
   } else {
     // Si no hay coincidencia en FAQs, usar OpenAI
     console.log('No se encontró respuesta en FAQs, utilizando OpenAI...');
@@ -104,22 +113,22 @@ export const manejarConsultaChatGPT = async (senderId: string, text: string) => 
           {
             role: 'system',
             content:
-              'Eres un asistente de Crediweb, una plataforma que ofrece préstamos personales en línea. Tu objetivo es ayudar a los usuarios a entender los servicios de Crediweb, como los requisitos para solicitar un préstamo, tasas de interés, plazos de pago, y cualquier otra consulta relacionada con los productos financieros de Crediweb. Recuerda alentar a las personas a descargar la aplicación desde [https://bit.ly/3aIB8HL]. Usa un lenguaje natural, amigable y sencillo ya que nuestro público es gente del común y puedes usar emoticones. Ten presente que actualmente la app solo está disponible para dispositivos Android y estamos trabajando para dispositivos iOS.'
+              'Eres un asistente de Crediweb, una plataforma que ofrece préstamos personales en línea. Tu objetivo es ayudar a los usuarios a entender los servicios de Crediweb, como los requisitos para solicitar un préstamo, tasas de interés, plazos de pago, y cualquier otra consulta relacionada con los productos financieros de Crediweb. Recuerda alentar a las personas a descargar la aplicación desde [https://bit.ly/3aIB8HL]. Usa un lenguaje natural, amigable y sencillo ya que nuestro público es gente del común y puedes usar emoticones. Ten presente que actualmente la app solo está disponible para dispositivos Android y estamos trabajando para dispositivos iOS.',
           },
-          { role: 'user', content: text }
+          { role: 'user', content: text },
         ],
         max_tokens: 150,
-        temperature: 0.7
+        temperature: 0.7,
       });
 
       const openAIResponse =
         completion.choices[0]?.message?.content || 'Lo siento, no pude generar una respuesta.';
       const response = { text: openAIResponse };
-      await callSendAPI(senderId, response);
+      await callSendAPI(platform, senderId, response);
     } catch (error) {
       console.error('Error al generar respuesta con OpenAI:', error);
       const response = { text: 'Lo siento, ocurrió un error al procesar tu consulta.' };
-      await callSendAPI(senderId, response);
+      await callSendAPI(platform, senderId, response);
     }
   }
 
@@ -134,27 +143,24 @@ export const manejarConsultaChatGPT = async (senderId: string, text: string) => 
 
     console.log(`Mensaje aleatorio seleccionado para continuar: ${followUpMessage}`);
     const response = { text: followUpMessage };
-    await callSendAPI(senderId, response);
+    await callSendAPI(platform, senderId, response);
 
     // Cambiar el estado a 'waiting_for_user_response'
     userSessions[senderId].state = 'waiting_for_user_response';
 
     // Configurar otro temporizador para terminar la conversación si el usuario no responde
     userSessions[senderId].timeoutHandle = setTimeout(() => {
-      terminarConversacion(senderId);
+      terminarConversacion(senderId, platform);
     }, 60000); // 60 segundos de espera
   }, delayInMilliseconds);
 };
 
-function terminarConversacion(senderId: string) {
-  console.log(`Terminando conversación con ${senderId} por inactividad.`);
+function terminarConversacion(senderId: string, platform: 'messenger' | 'instagram') {
+  console.log(`Terminando conversación con ${senderId} en ${platform} por inactividad.`);
   // Limpiar cualquier temporizador pendiente
   if (userSessions[senderId]?.timeoutHandle) {
     clearTimeout(userSessions[senderId].timeoutHandle!);
   }
   // Eliminar la sesión del usuario
   delete userSessions[senderId];
-  // Opcionalmente, puedes enviar un mensaje de despedida al usuario
-  // const response = { text: 'Gracias por contactarnos. Si necesitas algo más, no dudes en escribirnos.' };
-  // callSendAPI(senderId, response);
 }

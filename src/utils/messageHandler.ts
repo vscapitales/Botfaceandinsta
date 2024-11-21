@@ -1,6 +1,5 @@
-// messageHandler.ts
-import { config } from 'dotenv';  // Importar config de dotenv
-config();  // Configurar dotenv
+import { config } from 'dotenv'; // Importar config de dotenv
+config(); // Configurar dotenv
 
 import { callSendAPI } from '../utils/callSendAPI';
 import { Wit } from 'node-wit';
@@ -14,17 +13,20 @@ if (!accessToken) {
 
 const witClient = new Wit({ accessToken });
 
-
-export async function handleIncomingMessage(senderId: string, messageText: string) {
+export async function handleIncomingMessage(
+  senderId: string,
+  messageText: string,
+  platform: 'messenger' | 'instagram' // Restringir el tipo a los valores permitidos
+) {
   try {
-    console.log(`Procesando mensaje de ${senderId}: ${messageText}`);
+    console.log(`Procesando mensaje de ${senderId} en la plataforma ${platform}: ${messageText}`);
 
     // Verificar si el usuario tiene una sesión activa
     if (userSessions[senderId]) {
       // Si el usuario ya tiene una sesión activa, manejar la consulta
-      await manejarConsultaChatGPT(senderId, messageText);
+      await manejarConsultaChatGPT(senderId, messageText, platform); // Se agregó el argumento `platform`
     } else {
-      // Si no hay sesión activa, procesar el mensaje con Wit.ai
+      // Procesar el mensaje con Wit.ai
       const witResponse = await witClient.message(messageText, {});
 
       // Analizar la respuesta de Wit.ai y determinar la intención
@@ -33,23 +35,23 @@ export async function handleIncomingMessage(senderId: string, messageText: strin
       if (intent === 'saludo') {
         // Respuesta cuando se detecta un saludo
         const response = {
-          text: '¡Bienvenido a CrediWeb! 🌟 Soy tu asistente virtual 🤖. Estoy listo para ayudarte.'
+          text: `¡Bienvenido a CrediWeb desde ${platform}! 🌟 Soy tu asistente virtual 🤖. Estoy listo para ayudarte.`,
         };
-        await callSendAPI(senderId, response);
+        await callSendAPI(platform, senderId, response);
 
         // Iniciar el flujo obtenerRespuestaChatGPTFlow
-        await obtenerRespuestaChatGPTFlow(senderId, messageText);
+        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Se agregó el argumento `platform`
       } else {
         // Iniciar el flujo obtenerRespuestaChatGPTFlow sin saludo previo
-        await obtenerRespuestaChatGPTFlow(senderId, messageText);
+        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Se agregó el argumento `platform`
       }
     }
   } catch (error) {
     console.error('Error al procesar el mensaje:', error);
     // Respuesta predeterminada en caso de error
     const response = {
-      text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?'
+      text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?',
     };
-    await callSendAPI(senderId, response);
+    await callSendAPI(platform, senderId, response);
   }
 }

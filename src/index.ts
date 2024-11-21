@@ -1,6 +1,5 @@
 // index.ts
 
-
 import express, { Request, Response } from 'express';
 import { config } from './config/dotenvConfig'; // Asegúrate de que la ruta sea correcta
 import { handleIncomingMessage } from './utils/messageHandler';
@@ -45,16 +44,17 @@ app.post('/webhook', async (req: Request, res: Response) => {
 
     if (body.object === 'page' || body.object === 'instagram') {
       body.entry.forEach(async (entry: any) => {
-        let messagingEvents = [];
+        let messagingEvents: any[] = [];
 
+        // Procesar eventos de Messenger
         if (entry.messaging) {
-          // Eventos de Messenger
           messagingEvents = entry.messaging;
-        } else if (entry.changes && entry.changes[0].value.messages) {
-          // Eventos de Instagram
+        } 
+        // Procesar eventos de Instagram
+        else if (entry.changes && entry.changes[0].value.messages) {
           messagingEvents = entry.changes[0].value.messages.map((msg: any) => ({
             sender: { id: msg.from },
-            message: msg,
+            message: { text: msg.text },
           }));
         }
 
@@ -67,8 +67,12 @@ app.post('/webhook', async (req: Request, res: Response) => {
 
             console.log(`Mensaje recibido: "${messageText}" de ${senderId}`);
 
+            // Detectar la plataforma (Messenger o Instagram)
+            const platform: 'messenger' | 'instagram' =
+              body.object === 'page' ? 'messenger' : 'instagram';
+
             // Llama a tu función para manejar el mensaje
-            await handleIncomingMessage(senderId, messageText);
+            await handleIncomingMessage(senderId, messageText, platform);
           }
         }
       });

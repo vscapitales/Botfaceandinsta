@@ -1,7 +1,13 @@
 import axios, { AxiosError } from 'axios';
 import { config } from '../config/dotenvConfig';
 
-export async function callSendAPI(senderId: string, response: any) {
+// Función para enviar mensajes a través de la API de Facebook/Instagram
+export async function callSendAPI(
+  platform: 'messenger' | 'instagram',
+  senderId: string,
+  response: any
+) {
+  // Crear el cuerpo de la solicitud
   const requestBody = {
     recipient: {
       id: senderId,
@@ -9,22 +15,38 @@ export async function callSendAPI(senderId: string, response: any) {
     message: response,
   };
 
+  // Determinar el token de acceso según la plataforma
+  const accessToken =
+    platform === 'instagram'
+      ? config.instagramAccessToken
+      : config.facebookPageAccessToken;
+
+  // URL de la API de Graph para enviar mensajes
+  const apiUrl = `https://graph.facebook.com/v16.0/me/messages`;
+
   try {
-    const res = await axios.post(
-      `https://graph.facebook.com/v16.0/me/messages`,
-      requestBody,
-      {
-        params: { access_token: config.pageAccessToken },
-      }
-    );
-    console.log('Mensaje enviado con éxito');
+    // Hacer la solicitud POST a la API de Facebook/Instagram
+    const res = await axios.post(apiUrl, requestBody, {
+      params: { access_token: accessToken },
+    });
+
+    // Registro en consola en caso de éxito
+    console.log(`Mensaje enviado con éxito en ${platform}:`, res.data);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       // Manejo específico para errores de Axios
-      console.error('No se pudo enviar el mensaje:', error.response?.data || error.message);
+      const statusCode = error.response?.status || 'Desconocido';
+      const errorMessage = error.response?.data || error.message;
+      console.error(
+        `Error al enviar el mensaje en ${platform} (HTTP ${statusCode}):`,
+        errorMessage
+      );
     } else {
       // Manejo genérico para otros tipos de errores
-      console.error('No se pudo enviar el mensaje:', error);
+      console.error(
+        `Error inesperado al enviar el mensaje en ${platform}:`,
+        error
+      );
     }
   }
-};
+}
