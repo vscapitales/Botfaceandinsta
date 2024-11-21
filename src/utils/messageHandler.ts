@@ -1,59 +1,66 @@
-import { config } from 'dotenv'; // Importar config de dotenv
-config(); // Configurar dotenv
+import { config } from 'dotenv'; // Import dotenv config
+config(); // Configure dotenv
 
 import { callSendAPI } from '../utils/callSendAPI';
 import { Wit } from 'node-wit';
 import { obtenerRespuestaChatGPTFlow, manejarConsultaChatGPT } from '../flows/noclientes';
 
-// Verificar que el token de acceso esté definido
+// Verify that the Wit.ai token is defined
 const accessToken = process.env.WIT_AI_SERVER_ACCESS_TOKEN;
 if (!accessToken) {
-  throw new Error('WIT_AI_SERVER_ACCESS_TOKEN no está definido en las variables de entorno.');
+  throw new Error('WIT_AI_SERVER_ACCESS_TOKEN is not defined in the environment variables.');
 }
 
 const witClient = new Wit({ accessToken });
 
+// Track user sessions
 const userSessions: { [key: string]: { state: string; timeoutHandle?: NodeJS.Timeout } } = {};
-
 
 export async function handleIncomingMessage(
   senderId: string,
   messageText: string,
-  platform: 'messenger' | 'instagram' // Restringir el tipo a los valores permitidos
+  platform: 'messenger' | 'instagram' // Restrict type to permitted values
 ) {
   try {
-    console.log(`Procesando mensaje de ${senderId} en la plataforma ${platform}: ${messageText}`);
+    console.log(`Processing message from ${senderId} on platform ${platform}: ${messageText}`);
 
-    // Verificar si el usuario tiene una sesión activa
+    // Check if the user already has an active session
     if (userSessions[senderId]) {
-      // Si el usuario ya tiene una sesión activa, manejar la consulta
-      await manejarConsultaChatGPT(senderId, messageText, platform); // Se agregó el argumento `platform`
+      // If the user has an active session, handle the query
+      await manejarConsultaChatGPT(senderId, messageText, platform); // Added `platform` argument
     } else {
-      // Procesar el mensaje con Wit.ai
+      // Process the message with Wit.ai
       const witResponse = await witClient.message(messageText, {});
 
-      // Analizar la respuesta de Wit.ai y determinar la intención
-      const intent = witResponse.intents[0]?.name;
+      // Validate the existence of intents before accessing the array
+      const intent = witResponse.intents?.[0]?.name || null;
 
       if (intent === 'saludo') {
-        // Respuesta cuando se detecta un saludo
+        // Response for greeting intent
         const response = {
-          text: `¡Bienvenido a CrediWeb desde ${platform}! 🌟 Soy tu asistente virtual 🤖. Estoy listo para ayudarte.`,
+          text: `Welcome to CrediWeb from ${platform}! 🌟 I'm your virtual assistant 🤖. I'm ready to help you.`,
         };
         await callSendAPI(platform, senderId, response);
 
-        // Iniciar el flujo obtenerRespuestaChatGPTFlow
-        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Se agregó el argumento `platform`
+        // Start the flow to handle ChatGPT interactions
+        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Added `platform` argument
+      } else if (intent) {
+        // Handle other detected intents
+        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Added `platform` argument
       } else {
-        // Iniciar el flujo obtenerRespuestaChatGPTFlow sin saludo previo
-        await obtenerRespuestaChatGPTFlow(senderId, messageText, platform); // Se agregó el argumento `platform`
+        // If no intent was detected
+        console.log('No intent detected in the message.');
+        const response = {
+          text: 'I’m sorry, I didn’t understand your message. Could you repeat it?',
+        };
+        await callSendAPI(platform, senderId, response);
       }
     }
   } catch (error) {
-    console.error('Error al procesar el mensaje:', error);
-    // Respuesta predeterminada en caso de error
+    console.error('Error processing the message:', error);
+    // Default response in case of an error
     const response = {
-      text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?',
+      text: 'An error occurred while processing your request. Please try again later.',
     };
     await callSendAPI(platform, senderId, response);
   }
