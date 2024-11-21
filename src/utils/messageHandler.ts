@@ -36,7 +36,7 @@ export async function handleIncomingMessage(
         console.log(`Greeting detected for ${senderId}. Sending welcome message.`);
         // Send the initial greeting
         const response = {
-          text: `Bienvenido a CrediWeb para ${platform}! 🌟 Soy tu asistente virtual 🤖.`,
+          text: `Bienvenido a CrediWeb para ${platform}! Soy tu asistente virtual 🤖.`,
         };
         await callSendAPI(platform, senderId, response);
 
