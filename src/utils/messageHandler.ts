@@ -40,7 +40,7 @@ export async function handleIncomingMessage(
       } else {
         console.log('No matching keyword detected in the message.');
         const response = {
-          text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?',
+          text: 'Lo siento, no entendí tu mensaje. escribe "Hola" para comenzar nuevamente',
         };
         await callSendAPI(platform, senderId, response);
       }
