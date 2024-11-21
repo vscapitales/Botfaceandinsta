@@ -234,5 +234,31 @@ export const faqs = [
     🌟 *En CrediWeb, hacemos que tu experiencia sea confiable, rápida y transparente.*
     `
     },
+
+    {
+      pregunta: "donde estan ubicados",
+      respuesta: `
+        📍 *Ubicación de CrediWeb:*
+        
+        Estamos ubicados en Medellin, Colombia. Sin embargo, como plataforma en línea, puedes acceder a nuestros servicios desde cualquier lugar a través de nuestra app y sitio web.
+        
+        💡 *Para más información*, visita 👉 www.crediweb.com.co o descarga nuestra app aquí: [https://bit.ly/3aIB8HL]
+        
+        🙌 ¡Estamos aquí para ayudarte en cada paso! 💙
+      `
+    },
+    
+    {
+    pregunta: "ios",
+    respuesta: `
+      📱 *Disponibilidad de la App en iOS:*
+      
+      Actualmente, nuestra aplicación está disponible *solo para dispositivos Android*. ¡Estamos trabajando arduamente para lanzar una versión para iOS próximamente!
+      
+      💡 *Para estar al tanto de las actualizaciones*, visita 👉 www.crediweb.com.co o descarga nuestra app Android aquí: [https://bit.ly/3aIB8HL]
+      
+      🙌 ¡Gracias por tu interés en CrediWeb! 💙
+    `
+  },
     
 ];

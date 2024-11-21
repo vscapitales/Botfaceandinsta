@@ -12,7 +12,12 @@ dotenv.config();
 
 // Inicializar OpenAI
 const apiKey = process.env.OPENAI_API_KEY;
+if (!apiKey) {
+  console.error("Error: OPENAI_API_KEY no está definida en las variables de entorno.");
+  process.exit(1); // Termina la ejecución del proceso con un código de error
+}
 const openai = new OpenAI({ apiKey });
+
 
 // Función para elegir un mensaje aleatorio
 function getRandomConsultaMessage() {
@@ -27,13 +32,12 @@ function getRandomFollowUpMessage() {
 }
 
 function buscarFAQ(text: string): string | null {
-  // Normalizar texto para manejar acentos y eliminar caracteres especiales
   const normalize = (str: string) =>
     str
-      .normalize("NFD") // Descomponer caracteres Unicode
-      .replace(/[\u0300-\u036f]/g, "") // Eliminar marcas diacríticas
-      .replace(/[^\w\s]/g, "") // Eliminar caracteres especiales (ej. "?")
-      .toLowerCase(); // Convertir a minúsculas
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/g, "")
+      .toLowerCase();
 
   const textoNormalizado = normalize(text);
   console.log(`Texto normalizado del usuario: "${textoNormalizado}"`);
@@ -41,7 +45,8 @@ function buscarFAQ(text: string): string | null {
   for (const faq of faqs) {
     const preguntaNormalizada = normalize(faq.pregunta);
     console.log(`Comparando con FAQ: "${preguntaNormalizada}"`);
-    if (textoNormalizado.includes(preguntaNormalizada)) {
+    const regex = new RegExp(`\\b${preguntaNormalizada}\\b`, 'i');
+    if (regex.test(textoNormalizado)) {
       console.log(`Coincidencia encontrada: "${faq.pregunta}"`);
       return faq.respuesta;
     }
@@ -130,16 +135,17 @@ export const manejarConsultaChatGPT = async (
       max_tokens: 150,
       temperature: 0.7,
     });
-
+  
     const openAIResponse =
       completion.choices[0]?.message?.content || 'Lo siento, no pude generar una respuesta.';
     const response = { text: openAIResponse };
     await callSendAPI(platform, senderId, response);
-  } catch (error) {
-    console.error('Error al generar respuesta con OpenAI:', error);
+  } catch (error: any) { // Asegurarse de capturar cualquier tipo de error
+    console.error('Error al generar respuesta con OpenAI:', error.message || error);
     const response = { text: 'Lo siento, ocurrió un error al procesar tu consulta.' };
     await callSendAPI(platform, senderId, response);
   }
+  
 
   // Cambiar el estado a 'waiting_for_follow_up'
   updateSession(senderId, 'waiting_for_follow_up');
