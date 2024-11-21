@@ -1,3 +1,5 @@
+//index
+
 import express, { Request, Response } from 'express';
 import { config } from './config/dotenvConfig'; // Asegúrate de que la ruta sea correcta
 import { handleIncomingMessage } from './utils/messageHandler';
@@ -35,13 +37,13 @@ app.get('/', (req: Request, res: Response) => {
         <li>Offers basic information about our services.</li>
     </ul>
     <h2>Interaction examples</h2>
-    <p>Here are some examples of messages you can try with our bot:</p>
-    <ul>
-        <li><strong>User:</strong> "What are the requirements for a loan?"</li>
-        <li><strong>Bot:</strong> "To apply for a loan, you need to be over 18 years old, have an email address, and a bank account."</li>
-        <li><strong>User:</strong> "What are your business hours?"</li>
-        <li><strong>Bot:</strong> "Our business hours are Monday to Friday, from 9:00 a.m. to 5:00 p.m., and Saturdays from 8:00 a.m. to 1:00 p.m."</li>
-    </ul>
+    <p>Estos son ejemplos de mensajes que puedes probar con nuestro bot:</p>
+            <ul>
+                <li><strong>Usuario:</strong> "¿Cuáles son los requisitos para un préstamo?"</li>
+                <li><strong>Bot:</strong> "Para solicitar un préstamo, necesitas ser mayor de 18 años, tener un correo electrónico y una cuenta bancaria."</li>
+                <li><strong>Usuario:</strong> "¿Cuál es su horario de atención?"</li>
+                <li><strong>Bot:</strong> "Nuestro horario de atención es de lunes a viernes, de 9:00 a.m. a 5:00 p.m., y los sábados de 8:00 a.m. a 1:00 p.m."</li>
+            </ul>
     <p>For more information, visit our <a href="https://www.crediweb.com.co">official website</a>.</p>
     <footer>
         <p><a href="https://crediweb.com.co/datospersonales" target="_blank">Personal Data Policy</a></p>
@@ -98,7 +100,7 @@ app.post('/webhook', async (req: Request, res: Response) => {
         // Procesar eventos de Instagram
         else if (entry.changes && entry.changes[0].value.messages) {
           messagingEvents = entry.changes[0].value.messages.map((msg: any) => ({
-            sender: { id: msg.from },
+            sender: { id: msg.from.user_id }, // Asegúrate de que 'msg.from.user_id' contiene el ID de usuario correcto
             message: { text: msg.text },
           }));
         }

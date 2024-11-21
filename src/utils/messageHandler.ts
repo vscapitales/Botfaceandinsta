@@ -1,3 +1,6 @@
+//messageHandler.ts
+
+
 import { config } from 'dotenv'; // Import dotenv config
 config(); // Configure dotenv
 
@@ -38,7 +41,7 @@ export async function handleIncomingMessage(
       if (intent === 'saludo') {
         // Response for greeting intent
         const response = {
-          text: `Welcome to CrediWeb from ${platform}! 🌟 I'm your virtual assistant 🤖. I'm ready to help you.`,
+          text: `Bienvenido a CrediWeb para ${platform}! 🌟 Soy tu asistente virtual 🤖.`,
         };
         await callSendAPI(platform, senderId, response);
 
@@ -51,7 +54,7 @@ export async function handleIncomingMessage(
         // If no intent was detected
         console.log('No intent detected in the message.');
         const response = {
-          text: 'I’m sorry, I didn’t understand your message. Could you repeat it?',
+          text: 'Lo siento, no entendí tu mensaje. ¿Podrías repetirlo?',
         };
         await callSendAPI(platform, senderId, response);
       }
