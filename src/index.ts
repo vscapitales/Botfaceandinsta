@@ -85,6 +85,7 @@ app.get('/webhook', (req: Request, res: Response) => {
 });
 
 // Endpoint para manejar mensajes entrantes
+// Endpoint para manejar mensajes entrantes
 app.post('/webhook', async (req: Request, res: Response) => {
   try {
     const body = req.body;
@@ -93,16 +94,23 @@ app.post('/webhook', async (req: Request, res: Response) => {
       body.entry.forEach(async (entry: any) => {
         let messagingEvents: any[] = [];
 
+        // Agrega este console.log para inspeccionar el evento
+        console.log('Evento recibido:', JSON.stringify(entry, null, 2));
+
         // Procesar eventos de Messenger
         if (entry.messaging) {
           messagingEvents = entry.messaging;
         }
         // Procesar eventos de Instagram
-        else if (entry.changes && entry.changes[0].value.messages) {
-          messagingEvents = entry.changes[0].value.messages.map((msg: any) => ({
-            sender: { id: msg.from.user_id }, // Asegúrate de que 'msg.from.user_id' contiene el ID de usuario correcto
-            message: { text: msg.text },
-          }));
+        else if (entry.changes && entry.changes[0].field === 'messages') {
+          const value = entry.changes[0].value;
+          const messages = value.messages;
+          if (messages) {
+            messagingEvents = messages.map((msg: any) => ({
+              sender: { id: value.from.user_id }, // Obtener el user_id
+              message: msg,
+            }));
+          }
         }
 
         for (const event of messagingEvents) {

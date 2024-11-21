@@ -28,7 +28,7 @@ export async function callSendAPI(
       : config.facebookPageAccessToken;
 
   // URL de la API de Graph para enviar mensajes
-  const apiUrl = `https://graph.facebook.com/v21.0/me/messages`;
+  const apiUrl = `https://graph.facebook.com/v17.0/me/messages`;
 
   try {
     // Hacer la solicitud POST a la API de Facebook/Instagram
