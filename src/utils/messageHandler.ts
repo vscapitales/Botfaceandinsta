@@ -38,8 +38,11 @@ export async function handleIncomingMessage(
       // Log completo de la respuesta de Wit.ai
       console.log('Respuesta de Wit.ai:', JSON.stringify(witResponse, null, 2));
 
-      // Validate the existence of intents before accessing the array
-      const intent = witResponse.intents?.[0]?.name || null;
+// Obtener el intent desde la respuesta de Wit.ai
+const intent = witResponse.entities?.intent?.[0]?.value || null;
+const confidence = witResponse.entities?.intent?.[0]?.confidence || 0;
+
+console.log(`Intent detected: ${intent}, Confidence: ${confidence}`);
 
       if (intent === 'saludo') {
         // Response for greeting intent
