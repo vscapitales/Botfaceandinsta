@@ -33,17 +33,25 @@ function getRandomFollowUpMessage() {
   return followUpVariations[randomIndex];
 }
 
-// Función para buscar en las FAQs
 function buscarFAQ(text: string): string | null {
+  // Normalizar texto para manejar acentos y caracteres especiales
+  const normalize = (str: string) =>
+    str
+      .normalize("NFD") // Descomponer caracteres Unicode
+      .replace(/[\u0300-\u036f]/g, "") // Eliminar marcas diacríticas
+      .toLowerCase(); // Convertir a minúsculas
+
+  const textoNormalizado = normalize(text);
+
   for (const faq of faqs) {
-    const preguntaNormalizada = faq.pregunta.toLowerCase();
-    const textoNormalizado = text.toLowerCase();
+    const preguntaNormalizada = normalize(faq.pregunta);
     if (textoNormalizado.includes(preguntaNormalizada)) {
       return faq.respuesta;
     }
   }
   return null;
 }
+
 
 // Flujo principal
 export const obtenerRespuestaChatGPTFlow = async (
@@ -98,27 +106,24 @@ export const manejarConsultaChatGPT = async (
     userSessions[senderId].timeoutHandle = undefined;
   }
 
-  // Actualizar el estado de la sesión
-  userSessions[senderId].state = 'processing_user_input';
+  // Buscar en FAQs primero
+  const faqResponse = buscarFAQ(text);
+  if (faqResponse) {
+    console.log('Se encontró una respuesta en las FAQs.');
+    const response = { text: faqResponse };
+    await callSendAPI(platform, senderId, response);
+    return; // Termina aquí si se encontró una respuesta
+  }
 
+  console.log('No se encontró respuesta en FAQs, utilizando OpenAI...');
   try {
-    // Buscar en FAQs
-    const faqResponse = buscarFAQ(text);
-    if (faqResponse) {
-      console.log('Se encontró una respuesta en las FAQs.');
-      const response = { text: faqResponse };
-      await callSendAPI(platform, senderId, response);
-      return; // Termina aquí si se encontró una respuesta
-    }
-
-    console.log('No se encontró respuesta en FAQs, utilizando OpenAI...');
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         {
           role: 'system',
           content:
-            'Eres un asistente de Crediweb, una plataforma que ofrece préstamos personales en línea. Tu objetivo es ayudar a los usuarios a entender los servicios de Crediweb, como los requisitos para solicitar un préstamo, tasas de interés, plazos de pago, y cualquier otra consulta relacionada con los productos financieros de Crediweb. Recuerda alentar a las personas a descargar la aplicación desde [https://bit.ly/3aIB8HL]. Usa un lenguaje natural, amigable y sencillo ya que nuestro público es gente del común y puedes usar emoticones. Ten presente que actualmente la app solo está disponible para dispositivos Android y estamos trabajando para dispositivos iOS.',
+            'Eres un asistente de Crediweb, una plataforma que ofrece préstamos personales en línea. Ayuda a los usuarios a entender los servicios de Crediweb y anímalos a descargar la aplicación.',
         },
         { role: 'user', content: text },
       ],
@@ -154,6 +159,7 @@ export const manejarConsultaChatGPT = async (
     }, 60000); // 60 segundos de espera
   }, delayInMilliseconds);
 };
+
 
 
 function terminarConversacion(senderId: string, platform: 'messenger' | 'instagram') {
