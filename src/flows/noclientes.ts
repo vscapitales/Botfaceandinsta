@@ -34,11 +34,12 @@ function getRandomFollowUpMessage() {
 }
 
 function buscarFAQ(text: string): string | null {
-  // Normalizar texto para manejar acentos y caracteres especiales
+  // Normalizar texto para manejar acentos y eliminar caracteres especiales
   const normalize = (str: string) =>
     str
       .normalize("NFD") // Descomponer caracteres Unicode
       .replace(/[\u0300-\u036f]/g, "") // Eliminar marcas diacríticas
+      .replace(/[^\w\s]/g, "") // Eliminar caracteres especiales (ej. "?")
       .toLowerCase(); // Convertir a minúsculas
 
   const textoNormalizado = normalize(text);
@@ -51,6 +52,7 @@ function buscarFAQ(text: string): string | null {
   }
   return null;
 }
+
 
 
 // Flujo principal
