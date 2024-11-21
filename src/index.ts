@@ -102,27 +102,29 @@ app.post('/webhook', async (req: Request, res: Response) => {
           messagingEvents = entry.messaging;
         }
         // Procesar eventos de Instagram
-       
-// Procesar eventos de Instagram
-else if (entry.changes && entry.changes[0].field === 'messages') {
-  const value = entry.changes[0].value;
-  const messages = value.messages;
-  if (messages) {
-    messagingEvents = messages.map((msg: any) => {
-      console.log('Mensaje de Instagram:', JSON.stringify(msg, null, 2));
-      return {
-        sender: { id: msg.from.id }, // Obtener el 'id' del usuario
-        message: msg,
-      };
-    });
-  }
-}
-
-
+        else if (entry.changes && entry.changes[0].field === 'messages') {
+          const value = entry.changes[0].value;
+          const messages = value.messages;
+          if (messages) {
+            messagingEvents = messages.map((msg: any) => {
+              console.log('Mensaje de Instagram:', JSON.stringify(msg, null, 2));
+              return {
+                sender: { id: msg.from.id }, // Obtener el 'id' del usuario
+                message: msg,
+              };
+            });
+          }
+        }
 
         for (const event of messagingEvents) {
           const senderId = event.sender.id;
           const message = event.message;
+
+          // Ignorar mensajes de eco
+          if (message && message.is_echo) {
+            console.log('Mensaje de eco recibido. Se ignora.');
+            continue; // Saltar al siguiente evento
+          }
 
           if (message && message.text) {
             const messageText = message.text.body || message.text;
