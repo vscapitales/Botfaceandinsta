@@ -13,6 +13,9 @@ if (!accessToken) {
 
 const witClient = new Wit({ accessToken });
 
+const userSessions: { [key: string]: { state: string; timeoutHandle?: NodeJS.Timeout } } = {};
+
+
 export async function handleIncomingMessage(
   senderId: string,
   messageText: string,
