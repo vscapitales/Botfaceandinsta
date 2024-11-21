@@ -166,7 +166,7 @@ export const manejarConsultaChatGPT = async (
     // Configurar otro temporizador para terminar la conversación si el usuario no responde
     const finalTimeout = setTimeout(() => {
       terminarConversacion(senderId, platform);
-    }, 300000); // 5 min de espera
+    }, 180000); // 3 min de espera
 
     setTimeoutHandle(senderId, finalTimeout);
   }, delayInMilliseconds);
