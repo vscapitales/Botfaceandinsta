@@ -1,6 +1,6 @@
 //callsendapi.ts
 
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import { config } from '../config/dotenvConfig';
 
 // Función para enviar mensajes a través de la API de Facebook/Instagram
@@ -10,10 +10,7 @@ export async function callSendAPI(
   response: any
 ) {
   // Crear el objeto recipient basado en la plataforma
-  const recipient =
-    platform === 'instagram'
-      ? { user_id: senderId } // Usar 'user_id' para Instagram
-      : { id: senderId };     // Usar 'id' para Messenger
+  const recipient = { id: senderId };
 
   // Crear el cuerpo de la solicitud
   const requestBody = {
@@ -28,7 +25,7 @@ export async function callSendAPI(
       : config.facebookPageAccessToken;
 
   // URL de la API de Graph para enviar mensajes
-  const apiUrl = `https://graph.facebook.com/v17.0/me/messages`;
+  const apiUrl = `https://graph.facebook.com/v21.0/me/messages`;
 
   try {
     // Hacer la solicitud POST a la API de Facebook/Instagram

@@ -28,7 +28,7 @@ app.get('/', (req: Request, res: Response) => {
     </style>
 </head>
 <body>
-    <h1>Crediweb's Instagram Bot</h1>
+    <h1>Crediweb's Instagram and Facebook Bot</h1>
     <p>This bot automatically responds to common questions about our services on Instagram.</p>
     <h2>What does the bot do?</h2>
     <ul>
@@ -84,7 +84,7 @@ app.get('/webhook', (req: Request, res: Response) => {
   }
 });
 
-// Endpoint para manejar mensajes entrantes
+
 // Endpoint para manejar mensajes entrantes
 app.post('/webhook', async (req: Request, res: Response) => {
   try {
@@ -102,16 +102,23 @@ app.post('/webhook', async (req: Request, res: Response) => {
           messagingEvents = entry.messaging;
         }
         // Procesar eventos de Instagram
-        else if (entry.changes && entry.changes[0].field === 'messages') {
-          const value = entry.changes[0].value;
-          const messages = value.messages;
-          if (messages) {
-            messagingEvents = messages.map((msg: any) => ({
-              sender: { id: value.from.user_id }, // Obtener el user_id
-              message: msg,
-            }));
-          }
-        }
+       
+// Procesar eventos de Instagram
+else if (entry.changes && entry.changes[0].field === 'messages') {
+  const value = entry.changes[0].value;
+  const messages = value.messages;
+  if (messages) {
+    messagingEvents = messages.map((msg: any) => {
+      console.log('Mensaje de Instagram:', JSON.stringify(msg, null, 2));
+      return {
+        sender: { id: msg.from.id }, // Obtener el 'id' del usuario
+        message: msg,
+      };
+    });
+  }
+}
+
+
 
         for (const event of messagingEvents) {
           const senderId = event.sender.id;
