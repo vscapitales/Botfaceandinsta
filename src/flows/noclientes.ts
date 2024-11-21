@@ -1,4 +1,4 @@
-//noclientes.ts
+// noclientes.ts
 
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
@@ -6,20 +6,13 @@ import { callSendAPI } from '../utils/callSendAPI';
 import { consultaVariations } from './consultaVariations';
 import { followUpVariations } from './followUpVariations';
 import { faqs } from './faqs';
+import { getSession, createSession, updateSession, setTimeoutHandle, clearTimeoutHandle, deleteSession } from '../config/sessionManager';
 
 dotenv.config();
 
 // Inicializar OpenAI
 const apiKey = process.env.OPENAI_API_KEY;
 const openai = new OpenAI({ apiKey });
-
-// Estructura para manejar sesiones de usuarios
-interface UserSession {
-  state: string;
-  timeoutHandle?: NodeJS.Timeout;
-}
-
-const userSessions: { [key: string]: UserSession } = {};
 
 // Función para elegir un mensaje aleatorio
 function getRandomConsultaMessage() {
@@ -43,17 +36,19 @@ function buscarFAQ(text: string): string | null {
       .toLowerCase(); // Convertir a minúsculas
 
   const textoNormalizado = normalize(text);
+  console.log(`Texto normalizado del usuario: "${textoNormalizado}"`);
 
   for (const faq of faqs) {
     const preguntaNormalizada = normalize(faq.pregunta);
+    console.log(`Comparando con FAQ: "${preguntaNormalizada}"`);
     if (textoNormalizado.includes(preguntaNormalizada)) {
+      console.log(`Coincidencia encontrada: "${faq.pregunta}"`);
       return faq.respuesta;
     }
   }
+  console.log('No se encontró una coincidencia en las FAQs.');
   return null;
 }
-
-
 
 // Flujo principal
 export const obtenerRespuestaChatGPTFlow = async (
@@ -64,7 +59,7 @@ export const obtenerRespuestaChatGPTFlow = async (
   console.log(`Iniciando flujo alternativo para ${senderId} en ${platform}...`);
 
   // Iniciar una nueva sesión para el usuario
-  userSessions[senderId] = { state: 'waiting_for_initial_response' };
+  createSession(senderId, 'waiting_for_initial_response');
 
   // Mensaje inicial
   const initialMessage =
@@ -82,9 +77,11 @@ export const obtenerRespuestaChatGPTFlow = async (
   await callSendAPI(platform, senderId, response2);
 
   // Configurar un temporizador para terminar la conversación si el usuario no responde
-  userSessions[senderId].timeoutHandle = setTimeout(() => {
+  const timeout = setTimeout(() => {
     terminarConversacion(senderId, platform);
   }, 60000); // 60 segundos de espera
+
+  setTimeoutHandle(senderId, timeout);
 };
 
 // Manejar la consulta después del mensaje aleatorio
@@ -96,16 +93,17 @@ export const manejarConsultaChatGPT = async (
   console.log(`Procesando consulta para ${senderId} en ${platform}...`);
 
   // Verificar si el usuario tiene una sesión activa
-  if (!userSessions[senderId]) {
+  const session = getSession(senderId);
+  if (!session) {
     console.log(`No hay sesión activa para ${senderId}. Iniciando nueva sesión.`);
     await obtenerRespuestaChatGPTFlow(senderId, text, platform);
     return;
   }
 
   // Limpiar el temporizador anterior si el usuario respondió
-  if (userSessions[senderId].timeoutHandle) {
-    clearTimeout(userSessions[senderId].timeoutHandle);
-    userSessions[senderId].timeoutHandle = undefined;
+  if (session.timeoutHandle) {
+    clearTimeout(session.timeoutHandle);
+    clearTimeoutHandle(senderId);
   }
 
   // Buscar en FAQs primero
@@ -144,32 +142,32 @@ export const manejarConsultaChatGPT = async (
   }
 
   // Cambiar el estado a 'waiting_for_follow_up'
-  userSessions[senderId].state = 'waiting_for_follow_up';
+  updateSession(senderId, 'waiting_for_follow_up');
 
   const delayInMilliseconds = 8000; // 8 segundos
-  userSessions[senderId].timeoutHandle = setTimeout(async () => {
+  const followUpTimeout = setTimeout(async () => {
     const followUpMessage = getRandomFollowUpMessage();
     console.log(`Mensaje aleatorio seleccionado para continuar: ${followUpMessage}`);
     const response = { text: followUpMessage };
     await callSendAPI(platform, senderId, response);
 
-    userSessions[senderId].state = 'waiting_for_user_response';
+    updateSession(senderId, 'waiting_for_user_response');
 
     // Configurar otro temporizador para terminar la conversación si el usuario no responde
-    userSessions[senderId].timeoutHandle = setTimeout(() => {
+    const finalTimeout = setTimeout(() => {
       terminarConversacion(senderId, platform);
     }, 60000); // 60 segundos de espera
+
+    setTimeoutHandle(senderId, finalTimeout);
   }, delayInMilliseconds);
+
+  setTimeoutHandle(senderId, followUpTimeout);
 };
-
-
 
 function terminarConversacion(senderId: string, platform: 'messenger' | 'instagram') {
   console.log(`Terminando conversación con ${senderId} en ${platform} por inactividad.`);
   // Limpiar cualquier temporizador pendiente
-  if (userSessions[senderId]?.timeoutHandle) {
-    clearTimeout(userSessions[senderId].timeoutHandle!);
-  }
+  clearTimeoutHandle(senderId);
   // Eliminar la sesión del usuario
-  delete userSessions[senderId];
+  deleteSession(senderId);
 }

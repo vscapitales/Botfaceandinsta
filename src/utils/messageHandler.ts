@@ -1,5 +1,4 @@
-//messageHandler.ts
-
+// messageHandler.ts
 
 import { config } from 'dotenv'; // Import dotenv config
 config(); // Configure dotenv
@@ -7,11 +6,7 @@ config(); // Configure dotenv
 import { callSendAPI } from '../utils/callSendAPI';
 import { obtenerRespuestaChatGPTFlow, manejarConsultaChatGPT } from '../flows/noclientes';
 import { keywords } from '../config/keywords';
-
-
-
-// Track user sessions
-const userSessions: { [key: string]: { state: string; timeoutHandle?: NodeJS.Timeout } } = {};
+import { getSession, createSession } from '../config/sessionManager';
 
 export async function handleIncomingMessage(
   senderId: string,
@@ -22,7 +17,7 @@ export async function handleIncomingMessage(
     console.log(`Processing message from ${senderId} on platform ${platform}: ${messageText}`);
 
     // Check if the user already has an active session
-    if (userSessions[senderId]) {
+    if (getSession(senderId)) {
       // If the user has an active session, handle the query
       await manejarConsultaChatGPT(senderId, messageText, platform);
     } else {

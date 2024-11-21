@@ -9,5 +9,6 @@ export const config = {
   facebookPageAccessToken: process.env.FACEBOOK_API_TOKEN || '', // Token para Messenger
   instagramAccessToken: process.env.INSTAGRAM_API_TOKEN || '', // Token para Instagram
   verifyToken: process.env.FACEBOOK_VERIFY_TOKEN || '', // Token de verificación para Webhooks
-  port: process.env.PORT || 3000, // Puerto de la aplicación
+  openaiApiKey: process.env.OPENAI_API_KEY || '', // API Key de OpenAI
+  port: parseInt(process.env.PORT || '3000', 10), // Puerto de la aplicación
 };
